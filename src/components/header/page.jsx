@@ -6,9 +6,11 @@ const Header = () => {
       <div className="container mx-auto">
         <div className="header flex items-center justify-around">
           <div className="header-one">
-            <h2 className="text-cyan-600 font-sans font-semibold">
-              CRYPTOFOLIO
-            </h2>
+            <Link href="/home">
+              <h2 className="text-cyan-600 font-sans font-semibold">
+                CRYPTOFOLIO
+              </h2>
+            </Link>
           </div>
           <div className="header-two flex items-center gap-3">
             <select
