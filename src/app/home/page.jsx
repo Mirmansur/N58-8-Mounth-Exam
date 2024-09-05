@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import Carusel from "../carusel/page";
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Link from "next/link";
+import { useDispatch } from "react-redux";
 
 const Home = () => {
   const [data, setData] = useState([]);
@@ -10,13 +10,14 @@ const Home = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 100;
+  // const [likedProducts, setLikedProducts] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=USD&order=gecko_desc&per_page=100&page=${currentPage}&sparkline=false&price_change_percentage=24h`
+          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=USD&order=gecko_desc&per_page=${itemsPerPage}&page=${currentPage}&sparkline=false&price_change_percentage=24h`
         );
         if (!res.ok) {
           throw new Error("Failed to fetch data");
@@ -44,11 +45,36 @@ const Home = () => {
     }
   };
 
-  // Paginate data based on the current page and items per page
   const paginatedData = data.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // const isProductLiked = (productId) => {
+  //   return likedProducts.some((coin) => coin.id === productId);
+  // };
+
+  // const handleToggleLike = (coin) => {
+  //   if (isProductLiked(coin.id)) {
+  //     setLikedProducts(
+  //       likedProducts.filter((likedCoin) => likedCoin.id !== coin.id)
+  //     );
+  //     console.log("Product removed from liked list");
+  //   } else {
+  //     setLikedProducts([...likedProducts, coin]);
+  //     console.log("Product added to liked list");
+  //   }
+  // };
+  const { likedProducts } = useSelector((state) => state.like);
+  const dispatch = useDispatch();
+
+  const isProductLiked = (id) => {
+    return likedProducts?.some((product) => product.id === id);
+  };
+
+  const handleLike = (product) => {
+    dispatch(addToLiked(product));
+  };
 
   return (
     <div className="bg-slate-900 min-h-screen flex flex-col">
@@ -60,9 +86,7 @@ const Home = () => {
           <p className="text-gray-300 text-lg">
             Get all the info regarding your favorite Cryptocurrency
           </p>
-          <div className="mt-10">
-            <Carusel />
-          </div>
+          <div className="mt-10">{/* <Carusel /> */}</div>
         </div>
       </div>
       <div className="container mx-auto flex-grow">
@@ -79,7 +103,7 @@ const Home = () => {
           {error && <p className="text-red-500">{error}</p>}
           {!error && paginatedData.length > 0 && (
             <>
-              <table className="w-full max-w-3xl text-left text-white">
+              <table className="table-auto w-full max-w-3xl text-left text-white">
                 <thead>
                   <tr className="bg-cyan-600">
                     <th className="py-2 px-4">Coin</th>
@@ -97,42 +121,56 @@ const Home = () => {
                     )
                     .map((coin) => (
                       <tr key={coin.id} className="border-b border-gray-700">
-                        <Link
-                          href={`/product/${coin.id}`}
-                          className="flex items-center"
-                        >
-                          <td className="py-4 px-4 flex items-center">
-                            <img
-                              src={coin.image}
-                              alt={coin.name}
-                              className="w-6 h-6 mr-2"
-                            />
-                            <div>
-                              <p className="font-bold">
-                                {coin.symbol.toUpperCase()}
-                              </p>
-                              <p className="text-gray-400 text-sm">
-                                {coin.name}
-                              </p>
+                        <td className="py-4 px-4">
+                          <Link href={`/product/${coin.id}`}>
+                            <div className="flex items-center">
+                              <img
+                                src={coin.image}
+                                alt={coin.name}
+                                className="w-6 h-6 mr-2"
+                              />
+                              <div>
+                                <p className="font-bold">
+                                  {coin.symbol.toUpperCase()}
+                                </p>
+                                <p className="text-gray-400 text-sm">
+                                  {coin.name}
+                                </p>
+                              </div>
                             </div>
-                          </td>
-                          <td className="py-4 px-4">
-                            ₹{coin.current_price.toLocaleString()}
-                          </td>
-                          <td
-                            className={`py-4 px-4 ${
-                              coin.price_change_percentage_24h >= 0
-                                ? "text-green-500"
-                                : "text-red-500"
-                            } flex items-center`}
+                          </Link>
+                        </td>
+                        <td className="py-4 px-4">
+                          ₹{coin.current_price.toLocaleString()}
+                        </td>
+                        <td
+                          className={`py-4 px-4 ${
+                            coin.price_change_percentage_24h >= 0
+                              ? "text-green-500"
+                              : "text-red-500"
+                          } flex items-center`}
+                        >
+                          <button
+                            className="flex items-center"
+                            onClick={() => handleLike(coin)}
                           >
-                            <FaEye className="mr-2" />
+                            {isProductLiked(coin.id) ? (
+                              <FaEyeSlash
+                                size={24}
+                                className="mr-2 cursor-pointer"
+                              />
+                            ) : (
+                              <FaEye
+                                size={24}
+                                className="mr-2 cursor-pointer"
+                              />
+                            )}
                             {coin.price_change_percentage_24h}%
-                          </td>
-                          <td className="py-4 px-4">
-                            ₹{coin.market_cap.toLocaleString()}
-                          </td>
-                        </Link>
+                          </button>
+                        </td>
+                        <td className="py-4 px-4">
+                          ₹{coin.market_cap.toLocaleString()}
+                        </td>
                       </tr>
                     ))}
                 </tbody>
